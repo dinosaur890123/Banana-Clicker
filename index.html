@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banana Clicker Tycoon</title>
+    <link rel="stylesheet" href="styles.css">
+    </head>
+<body>
+    <h1>Banana Tycoon</h1>
+    <div id="score-container">
+        Bananas: <span id="score">0</span>
+    </div>
+    <div id="banana-container" onclick="clickBanana(event)">
+        <img src="banana.png" id="banana-img" alt="Click Me!" onerror="this.style.display='none'; document.getElementById('fallback').style.display='block';">
+        <div id="fallback" class="fallback-banana">🍌</div>
+    </div>
+    <div class="controls">
+        <button id="buy-cursor" onclick="buyCursor()">
+            Buy Cursor (Cost: <span id="cursor-cost">15</span>)
+        </button>
+    </div>
+    <div style="margin-top: 20px; font-size: 0.9rem; color: #646262;">
+        Cursors owned: <span id="cursor-count">0</span> <br>
+        (Auto-clicks 1 banana every second per cursor)
+    </div>
+</body>
+<script src="script.js"></script>
+</html>
