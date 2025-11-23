@@ -1,0 +1,82 @@
+body {
+    font-family: Calibri;
+    background-color: #ffe135;
+    color: #3e3d3d;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    user-select: none;
+    overflow: hidden;
+}
+h1 {
+    font-size: 2.5rem;
+    margin-bottom: 30px;
+    background: rgba(255, 255, 255, 0.5);
+    color: #5c4033;
+}
+#score-container {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 30px;
+    background: rgba(255, 255, 255, 0.6);
+    padding: 10px 30px;
+    border-radius: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+#banana-container {
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+#banana-container:active {
+    transform: scale(0.95);
+}
+#banana-img {
+    width: 200px;
+    height: 200px;
+    object-fit: contain;
+    display: block;
+}
+.controls {
+    margin-top: 40px;
+    display: flex;
+    gap: 20px;
+}
+button {
+    padding: 12px 24px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 8px;
+    background-color: #5c4033;
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    box-shadow: 0 4px 0 #3e2b22;
+}
+button:hover {
+    background-color: #755242;
+}
+button:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 #3e2b22;
+}
+button:disabled {
+    background-color: #a9a8a8;
+    box-shadow: 0 4px 0 #7a7a7a;
+    cursor: not-allowed;
+}
+.click-visual {
+    position: absolute;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #5c4033;
+    pointer-events: none;
+    animation: floatUp 1s ease-out forwards;
+}
+@keyframes floatUp {
+    0% {opacity: 1; transform: translateY(0);}
+    100% {opacity: 0; transform: translateY(-50px);}
+}

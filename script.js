@@ -12,4 +12,42 @@ const bananaContainer = document.getElementById('banana-container');
 function updateUI() {
     scoreElement.textContent = Math.floor(bananas);
     cursorCostElement.textContent = cursorCost;
+    cursorCountElement.textContent = cursors;
+    if (bananas >= cursorCost) {
+        buyCursorButton.disabled = false
+    } else {
+        buyCursorButton.disabled = true;
+    }
 }
+function clickBanana(event) {
+    bananas += clickValue;
+    spawnFloatingText(event.clientX, event.clientY, `+${clickValue}`);
+    updateUI();
+}
+function buyCursor() {
+    if (bananas >= cursorCost) {
+        bananas -= cursorCost;
+        cursors++;
+        cursorCost = Math.floor(cursorCost * 1.2);
+        updateUI();
+    }
+}
+function spawnFloatingText(x, y, text) {
+    const el = document.createElement('div');
+    el.classList.add('click-visual');
+    el.textContent = text;
+    const randomX = (Math.random() - 0.5) * 20;
+    el.style.left = `${x + randomX}px`;
+    el.style.top = `${y - 20}px`;
+    document.body.appendChild(el);
+    setTimeout(() => {
+        el.remove();
+    }, 1000);
+}
+setInterval(() => {
+    if (cursors > 0) {
+        bananas += cursors;
+        updateUI();
+    }
+}, 1000);
+updateUI();
