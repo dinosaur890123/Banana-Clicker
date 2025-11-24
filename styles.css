@@ -76,6 +76,12 @@ button:disabled {
     pointer-events: none;
     animation: floatUp 1s ease-out forwards;
 }
+.fallback-banana {
+    font-size: 150px;
+    line-height: 200px;
+    text-align: center;
+    display: none;
+}
 @keyframes floatUp {
     0% {opacity: 1; transform: translateY(0);}
     100% {opacity: 0; transform: translateY(-50px);}
