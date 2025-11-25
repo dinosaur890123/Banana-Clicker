@@ -27,8 +27,30 @@ function updateUI() {
     let bps = 0;
     gameData.buildings.forEach(b => bps += (b.count * b.rate));
     document.getElementById('bps').textContent = bps.toFixed(1);
-    renderShop();
     document.title = `${Math.floor(gameData.bananas)} Bananas - Tycoon`;
+    const clickCost = getClickUpgradeCost();
+    const clickButton = document.getElementById('button-click-upgrade');
+    if (clickButton) {
+        if (gameData.bananas >= clickCost) {
+            clickButton.classList.remove('disabled');
+        } else {
+            clickButton.classList.add('disabled');
+        }
+        document.getElementById('click-name').textContent = `Better Clicks (Lvl ${gameData.clickLevel})`;
+        document.getElementById('click-cost-text').textContent = `Cost: ${clickCost.toLocaleString()} bananas`;
+    }
+    gameData.buildings.forEach((building, index) => {
+        const button = document.getElementById(`button-building-${index}`);
+        if (button) {
+            if (gameData.bananas >= building.cost) {
+                button.classList.remove('disabled')
+            } else {
+                button.classList.add('disabled');
+            }
+            document.getElementById(`cost-building-${index}`).textContent = `Cost: ${building.cost.toLocaleString()} bananas`;
+            document.getElementById(`count-building-${index}`).textContent = building.count;
+        }
+    })
 }
 function clickBanana(event) {
     const power = getClickPower();
@@ -44,7 +66,6 @@ function buyBuilding(index) {
         building.count++;
         building.cost = Math.ceil(building.baseCost * Math.pow(1.15, building.count));
         updateUI();
-        renderShop();
     }
 }
 function buyClickUpgrade() {
@@ -53,19 +74,16 @@ function buyClickUpgrade() {
         gameData.bananas -= cost;
         gameData.clickLevel++;
         updateUI();
-        renderShop();
     }
 }
-function renderShop() {
+function createShop() {
     const clickContainer = document.getElementById('click-upgrade-container');
-    const clickCost = getClickUpgradeCost();
-    const canAffordClick = gameData.bananas >= clickCost;
     clickContainer.innerHTML = `
-    <div class="shop-item ${canAffordClick ? '' : 'disabled'}" onclick="buyClickUpgrade()">
+    <div id="button-click-upgrade" class="shop-item" onclick="buyClickUpgrade()">
         <div class="item-info">
-            <h3>Better Clicks (Lvl ${gameData.clickLevel})</h3>
-            <p>Cost: ${clickCost} bananas</p>
-            <p style="font-size:0.7rem; color:#888;">+1.5 power</p>
+            <h3 id="click-name">Better Clicks (Lvl 1)</h3>
+            <p id="click-cost-text">Cost: 100 bananas</p>
+            <p style="font-size:0.7rem; color: #8d8787;">+1.5 Power</p>
         </div>
         <div class="item-count">🖱️</div>
     </div>
@@ -73,17 +91,16 @@ function renderShop() {
     const list = document.getElementById('buildings-list');
     list.innerHTML = '';
     gameData.buildings.forEach((building, index) => {
-        const canAfford = gameData.bananas >= building.cost;
-        const item = document.createElement('div');
-        item.className = `shop-item ${canAfford ? '' : 'disabled'}`;
-        item.onclick = () => {if(canAfford) buyBuilding(index);};
+        const item = document.createElement('div');item.className = 'shop-item';
+        item.id = `button-building-${index}`;
+        item.onclick = () => buyBuilding(index);
         item.innerHTML = `
         <div class="item-info">
             <h3>${building.icon} ${building.name}</h3>
-            <p>Cost: ${building.cost.toLocaleString()} bananas</p>
-            <p style="font-size:0.7rem; color: #8d8585;">+${building.rate} bps</p>
+            <p id="cost-building-${index}">Cost: ${building.cost.toLocaleString()} bananas</p>
+            <p style="font-size:0.7rem; color: #8d8989;">+${building.rate} bps</p>
         </div>
-        <div class="item-count">${building.count}</div>
+        <div class="item-count" id="count-building-${index}">${building.count}</div>
         `;
         list.appendChild(item);
     });
@@ -107,8 +124,10 @@ function loadGame() {
 function saveGame() {
     localStorage.setItem('bananaTycoonSave', JSON.stringify(gameData));
     const notify = document.getElementById('save-notify');
-    notify.style.opacity = '1';
-    setTimeout(() => notify.style.opacity = '0', 2000);
+    if (notify) {
+        notify.style.opacity = '1';
+        setTimeout(() => notify.style.opacity = '0', 2000);
+    }
 }
 function buyCursor() {
     if (bananas >= cursorCost) {
