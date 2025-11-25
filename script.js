@@ -56,7 +56,7 @@ function clickBanana(event) {
     const power = getClickPower();
     gameData.bananas += power;
     gameData.totalClicks++;
-    spawnFloatingText(event.clientX, event.clientY, `+${clickValue}`);
+    spawnFloatingText(event.clientX, event.clientY, `+${power}`);
     updateUI();
 }
 function buyBuilding(index) {
