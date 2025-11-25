@@ -35,6 +35,15 @@
         Cursors owned: <span id="cursor-count">0</span> <br>
         (Auto-clicks 1 banana every second per cursor)
     </div>
+    <div id="offline-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2>Welcome back!</h2>
+            <p>While you were away, your monkeys worked hard</p>
+            <p class="offline-stats">You earned <span id="offline-bananas">0</span> bananas</p>
+            <p style="font-size: 0.8rem; color: #656161;">Time offline: <span id="offline-time">0</span>s</p>
+            <button onclick="closeModal()">Collect</button>
+        </div>
+    </div>
 </body>
 <script src="script.js"></script>
 </html>

@@ -2,6 +2,7 @@ const gameData = {
     bananas: 0,
     totalClicks: 0,
     clickLevel: 1,
+    lastSaveTime: Date.now(),
     buildings: [
         {id: 'cursor', name: 'Cursor', baseCost: 15, cost: 15, rate: 0.5, count: 0, icon: '👆'},
         {id: 'monkey', name: 'Monkey', baseCost: 100, cost: 100, rate: 4, count: 0, icon: '🐒'},
@@ -21,6 +22,11 @@ function getClickPower() {
 }
 function getClickUpgradeCost() {
     return Math.floor(100 * Math.pow(2, gameData.clickLevel));
+}
+function calculateBPS() {
+    let bps = 0;
+    gameData.buildings.forEach(b => bps += (b.count * b.rate));
+    return bps;
 }
 function updateUI() {
     document.getElementById('score').textContent = Math.floor(gameData.bananas).toLocaleString();
@@ -146,6 +152,16 @@ function spawnFloatingText(x, y, text) {
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 1000);
 }
+function closeModal() {
+    ddocument.getElementById('offline-modal').style.display = 'none';
+}
+function showOfflineModal(bananasEarned, secondsOffline) {
+    if (bananasEarned <= 0) return;
+    const modal = document.getElementById('offline-modal');
+    document.getElementById('offline-bananas').textContent = Math.floor(bananasEarned).toLocaleString();
+    document.getElementById('offline-time').textContent = secondsOffline;
+    modal.style.display = 'flex';
+}
 function resetGame() {
     if (confirm("Are you sure you want to reset?")) {
         localStorage.removeItem('bananaTycoonSave');
@@ -162,7 +178,7 @@ setInterval(() => {
 }, 1000);
 setInterval(() => {
     saveGame();
-})
+}, 10000)
 updateUI();
 createShop();
 loadGame();
