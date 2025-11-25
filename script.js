@@ -163,7 +163,6 @@ setInterval(() => {
 setInterval(() => {
     saveGame();
 })
-
 updateUI();
 createShop();
 loadGame();
