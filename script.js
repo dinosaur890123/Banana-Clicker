@@ -165,5 +165,5 @@ setInterval(() => {
 })
 
 updateUI();
-renderShop();
+createShop();
 loadGame();
