@@ -276,7 +276,7 @@ function spawnFloatingText(x, y, text) {
     setTimeout(() => el.remove(), 1000);
 }
 function closeModal() {
-    ddocument.getElementById('offline-modal').style.display = 'none';
+    document.getElementById('offline-modal').style.display = 'none';
 }
 function showOfflineModal(bananasEarned, secondsOffline) {
     if (bananasEarned <= 0) return;
@@ -291,6 +291,32 @@ function resetGame() {
         location.reload();
     }
 }
+function spawnGoldenBanana() {
+    const golden =  document.createElement('div');
+    golden.textContent = '🍌';
+    golden.classList.add('golden-banana');
+    const x = Math.random() * (window.innerWidth - 100) + 50;
+    const y = Math.random() * (window.innerHeight - 100) + 50;
+    golden.style.left = `${x}px`;
+    golden.style.top = `${y}px`;
+    golden.onclick = () => {
+        const bps = calculateBPS();
+        const reward = bps > 0 ? bps * 60 : 500;
+        gameData.bananas += reward;
+        spawnFloatingText(x, y, `GOLDEN BANANA! +${Math.floor(reward).toLocaleString()}`);
+        updateUI();
+        golden.remove();
+    };
+    document.body.appendChild(golden);
+    setTimeout(() => {
+        if(golden.parentNode) golden.remove();
+    }, 10000);
+}
+setInterval(() => {
+    if(Math.random() > 0.7) {
+        spawnGoldenBanana();
+    }
+})
 setInterval(() => {
     let bps = 0;
     gameData.buildings.forEach(b => bps += (b.count * b.rate));
@@ -302,6 +328,6 @@ setInterval(() => {
 setInterval(() => {
     saveGame();
 }, 10000)
-updateUI();
-createShop();
 loadGame();
+createShop();
+updateUI();
