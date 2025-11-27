@@ -221,6 +221,7 @@ function clickBanana(event) {
 }
 function buyBuilding(index) {
     const building = gameData.buildings[index];
+    const bulk = getBulkCost(building, buyMode);
     if (gameData.bananas >= building.cost) {
         gameData.bananas -= building.cost;
         building.count++;
@@ -260,7 +261,7 @@ function createShop() {
     `;
     const upgradeList = document.getElementById('upgrades-list');
     upgradeList.innerHTML = ''
-    gameData.upgrades.forEach((building, index) => {
+    gameData.upgrades.forEach((upgrade, index) => {
         const item = document.createElement('div');
         item.className = 'shop-item upgrade-item';
         item.id = `upgrade-item-${index}`;
@@ -301,6 +302,8 @@ function loadGame() {
         gameData.clickLevel = savedData.clickLevel || 1;
         gameData.totalClicks = savedData.totalClicks || 0;
         gameData.lastSaveTime = savedData.lastSaveTime || Date.now();
+        gameData.lifetimeBananas = savedData.lifetimeBananas || 0;
+        gameData.bananaPeels = savedData.bananaPeels || 0;
         if (savedData.buildings) {
             savedData.buildings.forEach((savedB, i) => {
                 if (gameData.buildings[i]) {
@@ -335,14 +338,7 @@ function saveGame() {
         setTimeout(() => notify.style.opacity = '0', 2000);
     }
 }
-function buyCursor() {
-    if (bananas >= cursorCost) {
-        bananas -= cursorCost;
-        cursors++;
-        cursorCost = Math.floor(cursorCost * 1.2);
-        updateUI();
-    }
-}
+
 function spawnFloatingText(x, y, text) {
     const el = document.createElement('div');
     el.classList.add('click-visual');
@@ -420,10 +416,10 @@ setInterval(() => {
     }
 }, 10000)
 setInterval(() => {
-    let bps = 0;
+    const bps = calculateBPS();
     gameData.buildings.forEach(b => bps += (b.count * b.rate));
     if (bps > 0) {
-        gameData.bananas += bps;
+        addBananas(bps);
         updateUI();
     }
 }, 1000);
