@@ -418,7 +418,7 @@ setInterval(() => {
     if(Math.random() > 0.7) {
         spawnGoldenBanana();
     }
-})
+}, 10000)
 setInterval(() => {
     let bps = 0;
     gameData.buildings.forEach(b => bps += (b.count * b.rate));
