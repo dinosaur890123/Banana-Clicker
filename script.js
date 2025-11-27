@@ -3,6 +3,8 @@ const gameData = {
     totalClicks: 0,
     clickLevel: 1,
     lastSaveTime: Date.now(),
+    lifetimeBananas: 0,
+    bananaPeels: 0,
     buildings: [
         {id: 'cursor', name: 'Cursor', baseCost: 15, cost: 15, rate: 0.5, count: 0, icon: '👆'},
         {id: 'monkey', name: 'Monkey', baseCost: 100, cost: 100, rate: 4, count: 0, icon: '🐒'},
@@ -66,6 +68,16 @@ const cursorCountElement = document.getElementById('cursor-count');
 const buyCursorButton = document.getElementById('buy-cursor');
 const bananaContainer = document.getElementById('banana-container');
 
+function calculatePossiblePeels() {
+    return Math.floor(gameData.lifetimeBananas / 100000);
+}
+function getPrestigeMultiplier() {
+    return 1 + (gameData.bananaPeels * 0.1); 
+}
+function addBananas(amount) {
+    gameData.bananas += amount;
+    gameData.lifetimeBananas += amount;
+}
 function getClickPower() {
     let power = Math.floor(1 + (gameData.clickLevel * 1.5));
     gameData.upgrades.forEach(u => {
@@ -73,6 +85,7 @@ function getClickPower() {
             power *= u.multiplier;
         }
     });
+    power *= getPrestigeMultiplier();
     return power;
 }
 function getClickUpgradeCost() {
@@ -88,7 +101,8 @@ function calculateBPS() {
             };
         });
         bps += (b.count * rate);
-    })
+    });
+    bps *= getPrestigeMultiplier();
     return bps;
 }
 function updateUI() {
@@ -96,6 +110,16 @@ function updateUI() {
     const bps = calculateBPS();
     document.getElementById('bps').textContent = bps.toFixed(1);
     document.title = `${Math.floor(gameData.bananas)} Bananas - Tycoon`;
+    if (gameData.bananaPeels > 0) {
+        document.getElementById('prestige-display').style.display = 'block';
+        document.getElementById('peel-count').textContent = gameData.bananaPeels.toLocaleString();
+        document.getElementById('peel-bonus').textContent = (gameData.bananaPeels * 10).toLocaleString();
+    }
+    const potentialPeels = calculatePossiblePeels();
+    const newPeels = potentialPeels - gameData.bananaPeels;
+    if (gameData.lifetimeBananas >= 100000) {
+        document.getElementById('prestige-section').style.display = 'block';
+    }
 
     const clickCost = getClickUpgradeCost();
     const clickButton = document.getElementById('button-click-upgrade');
@@ -284,6 +308,31 @@ function showOfflineModal(bananasEarned, secondsOffline) {
     document.getElementById('offline-bananas').textContent = Math.floor(bananasEarned).toLocaleString();
     document.getElementById('offline-time').textContent = secondsOffline;
     modal.style.display = 'flex';
+}
+function checkPrestige() {
+    const potentialPeels = calculatePossiblePeels();
+    const newPeels = potentialPeels - gameData.bananaPeels;
+    if (newPeels <= 0) {
+        alert("You need more lifetime bananas to earn a new Peel! (Next peel at " + ((gameData.bananaPeels + 1) * 100000).toLocaleString() + " lifetime bananas)");
+        return;
+    }
+    document.getElementById('claimable-peels').textContent = potentialPeels;
+    document.getElementById('future-bonus').textContent = (potentialPeels * 10).toLocaleString();
+    document.getElementById('prestige-modal').style.display = 'flex';
+}
+function doPrestige() {
+    const potentialPeels = calculatePossiblePeels();
+    gameData.bananas = 0;
+    gameData.totalClicks = 0;
+    gameData.clickLevel = 1;
+    gameData.bananaPeels = potentialPeels;
+    gameData.buildings.forEach(b => {
+        b.count = 0;
+        b.cost = b.baseCost;
+    });
+    gameData.upgrades.forEach(u => u.purchased = false);
+    saveGame();
+    location.reload();
 }
 function resetGame() {
     if (confirm("Are you sure you want to reset?")) {
