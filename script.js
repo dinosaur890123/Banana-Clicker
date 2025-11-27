@@ -67,7 +67,18 @@ const cursorCostElement = document.getElementById('cursor-cost');
 const cursorCountElement = document.getElementById('cursor-count');
 const buyCursorButton = document.getElementById('buy-cursor');
 const bananaContainer = document.getElementById('banana-container');
-
+let buyMode = 1;
+function formatNumber(num) {
+    if (num < 1000) return Math.floor(num);
+    const suffixes = ["", "k", "M", "B", "T", "Qa", "Qi"];
+    const suffixNum = Math.floor(("" + Math.floor(num)).length / 3);
+    if (suffixNum >= suffixes.length) return num.toExponential(2);
+    let shortValue = parseFloat((suffixNum != 0 ? (num / Math.pow(1000, suffixNum)) : num).toPrecision(3));
+    if (shortValue % 1 != 0) {
+        shortValue = shortValue.toFixed(1);
+    }
+    return shortValue + suffixes[suffixNum];
+}
 function calculatePossiblePeels() {
     return Math.floor(gameData.lifetimeBananas / 100000);
 }
@@ -104,6 +115,37 @@ function calculateBPS() {
     });
     bps *= getPrestigeMultiplier();
     return bps;
+}
+function getBulkCost(building, amount) {
+    if (amount === 'MAX') {
+        let affordable = 0;
+        let currentCost = building.cost;
+        let totalCost = 0;
+        let tempBananas = gameData.bananas;
+        while (tempBananas >= currentCost && affordable < 100) {
+            totalCost += currentCost;
+            tempBananas -= currentCost;
+            affordable++;
+            currentCost = Math.ceil(building.baseCost * Math.pow(1.15, building.count + affordable));
+        }
+        return {count: affordable, cost: totalCost};
+    } else {
+        let totalCost = 0;
+        let currentCost = building.cost;
+        for (let i = 0; i < amount; i++) {
+            let nextCost = Math.ceil(building.baseCost * Math.pow(1.15, building.count + i));
+            totalCost += nextCost;
+        }
+        return {count: amount, cost: totalCost};
+    }
+}
+function toggleBuyMode() {
+    if (buyMode === 1) buyMode = 10;
+    else if (buyMode === 10) buyMode = 'MAX';
+    else buyMode = 1;
+    const button = document.getElementById('buy-mode-button');
+    if (button) button.textContent = `Buy: ${buyMode}`;
+    updateUI();
 }
 function updateUI() {
     document.getElementById('score').textContent = Math.floor(gameData.bananas).toLocaleString();
@@ -147,15 +189,26 @@ function updateUI() {
         }
     });
     const upgradeContainer = document.getElementById('upgrades-container');
-    if (visibleUpgrades > 0) upgradeContainer.style.display = 'block';
-    else upgradeContainer.style.display = 'none';
+    if (upgradeContainer) upgradeContainer.style.display = visibleUpgrades > 0 ? 'block' : 'none';
+
     gameData.buildings.forEach((building, index) => {
         const button = document.getElementById(`button-building-${index}`);
         if (button) {
-            if (gameData.bananas >= building.cost) button.classList.remove('disabled');
-            else button.classList.add('disabled');
+            const bulk = getBulkCost(building, buyMode);
+            let displayCost = bulk.cost;
+            let displayCount = bulk.count;
+            if (buyMode === 'MAX' && displayCount === 0) {
+                displayCost = building.cost;
+                displayCount = 1;
+            }
             document.getElementById(`cost-building-${index}`).textContent = `Cost: ${building.cost.toLocaleString()} bananas`;
             document.getElementById(`count-building-${index}`).textContent = building.count;
+            if (gameData.bananas >= displayCost) {
+                button.classList.remove('disabled');
+            } else {
+                button.classList.add('disabled');
+            }
+            button.title = `Buy ${displayCount} for ${formatNumber(displayCost)}`;
         }
     });
 }
