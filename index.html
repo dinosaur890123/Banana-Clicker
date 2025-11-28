@@ -40,6 +40,9 @@
                 <br>
                 <span style="font-size: 0.8rem; font-weight: normal;">Reset for bonus</span>
             </button>
+            <button class="prestige-button" onclick="openPrestigeShop()" style="margin-top: 10px; background: #512DA8; font-size: 1rem; padding: 10px;">
+                Prestige Shop
+            </button>
         </div>
         <div style="margin-top: auto; font-size: 0.8rem; color: #9b9797; text-align: center; padding-top: 20px;">
             Your game is automatically saved <br>
@@ -72,6 +75,17 @@
                 <button onclick="doPrestige()" style="background-color: #673AB7;">Yes, ascend!</button>
                 <button onclick="closeModal('prestige-modal')" style="background-color: #999999;">Cancel</button>
             </div>
+        </div>
+    </div>
+    <div id="prestige-shop-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 500px; width: 90%;">
+            <h2 style="color: #673AB7;">Prestige Shop</h2>
+            <p>Spend Peels on permanent upgrades</p>
+            <div style="background: #f3e5f5; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-weight: bold; color: #4a148c;">
+                Available Peels: <span id="shop-peel-count">0</span>
+            </div>
+            <div id="prestige-shop-list" style="text-align: left; max-height: 400px; overflow-y: auto; padding-right: 5px;"></div>
+            <button onclick="closeModal('prestige-shop-modal')" style="margin-top: 20px; background-color: #999999;">Close</button>
         </div>
     </div>
 </body>

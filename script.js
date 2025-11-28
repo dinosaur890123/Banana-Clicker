@@ -5,6 +5,7 @@ const gameData = {
     lastSaveTime: Date.now(),
     lifetimeBananas: 0,
     bananaPeels: 0,
+    prestigeUpgrades: {},
     buildings: [
         {id: 'cursor', name: 'Cursor', baseCost: 15, cost: 15, rate: 0.5, count: 0, icon: '👆'},
         {id: 'monkey', name: 'Monkey', baseCost: 100, cost: 100, rate: 4, count: 0, icon: '🐒'},
@@ -61,7 +62,12 @@ const gameData = {
     }
     ]
 };
-
+const prestigeShopItems = [
+    {id: 'starter_kit', name: 'Starter Kit', cost: 1, desc: 'Start resets with 1 Monkey & 500 Bananas', icon: '📦'},
+    {id: 'golden_compass', name: 'Golden Compass', cost: 3, desc: 'Golden bananas appear 50% more often', icon: '🧭'},
+    {id: 'cheaper_merchants', name: 'Negotiation', cost: 5, desc: 'All buildings are 5% cheaper', icon: '🤝'},
+    {id: 'marketing', name: 'Marketing', cost: 10, desc: '+10% Global Production', icon: '📈'}
+]
 const scoreElement = document.getElementById('score');
 const cursorCostElement = document.getElementById('cursor-cost');
 const cursorCountElement = document.getElementById('cursor-count');
@@ -114,6 +120,9 @@ function calculateBPS() {
         bps += (b.count * rate);
     });
     bps *= getPrestigeMultiplier();
+    if (gameData.prestigeUpgrades && gameData.prestigeUpgrades.marketing) {
+        bps *= 1.1;
+    }
     return bps;
 }
 function getBulkCost(building, amount) {
@@ -122,13 +131,13 @@ function getBulkCost(building, amount) {
         let currentCost = building.cost;
         let totalCost = 0;
         let tempBananas = gameData.bananas;
-        while (tempBananas >= currentCost && affordable < 100) {
+        while (tempBananas >= (currentCost * discount) && affordable < 100) {
             totalCost += currentCost;
             tempBananas -= currentCost;
             affordable++;
             currentCost = Math.ceil(building.baseCost * Math.pow(1.15, building.count + affordable));
         }
-        return {count: affordable, cost: totalCost};
+        return {count: affordable, cost: Math.floor(totalCost * discount)};
     } else {
         let totalCost = 0;
         let currentCost = building.cost;
@@ -136,7 +145,7 @@ function getBulkCost(building, amount) {
             let nextCost = Math.ceil(building.baseCost * Math.pow(1.15, building.count + i));
             totalCost += nextCost;
         }
-        return {count: amount, cost: totalCost};
+        return {count: amount, cost: Math.floor(totalCost * discount)};
     }
 }
 function toggleBuyMode() {
@@ -223,8 +232,8 @@ function buyBuilding(index) {
     const building = gameData.buildings[index];
     const bulk = getBulkCost(building, buyMode);
     if (gameData.bananas >= building.cost) {
-        gameData.bananas -= building.cost;
-        building.count++;
+        gameData.bananas -= bulk.cost;
+        building.count += bulk.count;
         building.cost = Math.ceil(building.baseCost * Math.pow(1.15, building.count));
         updateUI();
     }
@@ -304,6 +313,7 @@ function loadGame() {
         gameData.lastSaveTime = savedData.lastSaveTime || Date.now();
         gameData.lifetimeBananas = savedData.lifetimeBananas || 0;
         gameData.bananaPeels = savedData.bananaPeels || 0;
+        gameData.prestigeUpgrades = savedData.prestigeUpgrades || {}; 
         if (savedData.buildings) {
             savedData.buildings.forEach((savedB, i) => {
                 if (gameData.buildings[i]) {
@@ -338,7 +348,6 @@ function saveGame() {
         setTimeout(() => notify.style.opacity = '0', 2000);
     }
 }
-
 function spawnFloatingText(x, y, text) {
     const el = document.createElement('div');
     el.classList.add('click-visual');
@@ -349,7 +358,11 @@ function spawnFloatingText(x, y, text) {
     setTimeout(() => el.remove(), 1000);
 }
 function closeModal() {
-    document.getElementById('offline-modal').style.display = 'none';
+    if (modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    } else {
+        document.getElementById('offline-modal').style.display = 'none';
+    }
 }
 function showOfflineModal(bananasEarned, secondsOffline) {
     if (bananasEarned <= 0) return;
@@ -371,15 +384,22 @@ function checkPrestige() {
 }
 function doPrestige() {
     const potentialPeels = calculatePossiblePeels();
+    const currentPrestigeUpgrades = gameData.prestigeUpgrades || {};
     gameData.bananas = 0;
     gameData.totalClicks = 0;
     gameData.clickLevel = 1;
     gameData.bananaPeels = potentialPeels;
+    gameData.prestigeUpgrades = currentPrestigeUpgrades;
     gameData.buildings.forEach(b => {
         b.count = 0;
         b.cost = b.baseCost;
     });
     gameData.upgrades.forEach(u => u.purchased = false);
+    if (gameData.prestigeUpgrades.starter_kit) {
+        gameData.bananas = 500;
+        gameData.buildings[1].count = 1;
+        gameData.buildings[1].cost = Math.ceil(gameData.buildings[1].baseCost * Math.pow(1.15, 1));
+    }
     saveGame();
     location.reload();
 }
@@ -410,6 +430,51 @@ function spawnGoldenBanana() {
         if(golden.parentNode) golden.remove();
     }, 10000);
 }
+function openPrestigeShop() {
+    const modal = document.getElementById('prestige-shop-modal');
+    renderPrestigeShop();
+    modal.style.display = 'flex';
+}
+function renderPrestigeShop() {
+    ocument.getElementById('shop-peel-count').textContent = gameData.bananaPeels.toLocaleString();
+    const list = document.getElementById('prestige-shop-list');
+    list.innerHTML = '';
+    prestigeShopItems.forEach(item => {
+        const isPurchased = gameData.prestigeUpgrades[item.id];
+        const canAfford = gameData.bananaPeels >= item.cost;
+        const div = document.createElement('div');
+        div.className = `prestige-shop-item ${isPurchased ? 'purchased' : ''} ${!canAfford && !isPurchased ? 'disabled' : ''}`;
+        if (!isPurchased && canAfford) {
+            div.onclick = () => buyPrestigeUpgrade(item.id);
+        }
+        div.innerHTML = `
+        <div class="item-info">
+            <h3>${item.icon} ${item.name}</h3>
+            <p style="color: #696666;">${item.desc}</p>
+        </div>
+        <div style="text-align: right;">
+            ${isPurchased 
+                    ? '<span style="color: green; font-weight: bold;">Owned</span>' 
+                    : `<span style="font-weight: bold; color: #673AB7;">${item.cost} Peels</span>`
+                }
+        <div>
+        `;
+        list.appendChild(div);
+    });
+}
+function buyPrestigeUpgrade(id) {
+    const item = prestigeShopItems.find(i => i.id === id);
+    if (item && !gameData.prestigeUpgrades[id] && gameData.bananaPeels >= item.cost) {
+        if (confirm(`Buy ${item.name} for ${item.cost} peels?`)) {
+            gameData.bananaPeels -= item.cost;
+            gameData.prestigeUpgrades[id] = true;
+            saveGame();
+            renderPrestigeShop();
+            updateUI();
+        }
+    }
+}
+
 setInterval(() => {
     if(Math.random() > 0.7) {
         spawnGoldenBanana();
