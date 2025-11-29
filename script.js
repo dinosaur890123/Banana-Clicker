@@ -126,6 +126,10 @@ function calculateBPS() {
     return bps;
 }
 function getBulkCost(building, amount) {
+    let discount = 1;
+    if (gameData.prestigeUpgrades && gameData.prestigeUpgrades.cheaper_merchants) {
+        discount = 0.95;
+    }
     if (amount === 'MAX') {
         let affordable = 0;
         let currentCost = building.cost;
@@ -231,7 +235,7 @@ function clickBanana(event) {
 function buyBuilding(index) {
     const building = gameData.buildings[index];
     const bulk = getBulkCost(building, buyMode);
-    if (gameData.bananas >= building.cost) {
+    if (gameData.bananas >= bulk.cost) {
         gameData.bananas -= bulk.cost;
         building.count += bulk.count;
         building.cost = Math.ceil(building.baseCost * Math.pow(1.15, building.count));
@@ -436,7 +440,7 @@ function openPrestigeShop() {
     modal.style.display = 'flex';
 }
 function renderPrestigeShop() {
-    ocument.getElementById('shop-peel-count').textContent = gameData.bananaPeels.toLocaleString();
+    document.getElementById('shop-peel-count').textContent = gameData.bananaPeels.toLocaleString();
     const list = document.getElementById('prestige-shop-list');
     list.innerHTML = '';
     prestigeShopItems.forEach(item => {
@@ -476,7 +480,11 @@ function buyPrestigeUpgrade(id) {
 }
 
 setInterval(() => {
-    if(Math.random() > 0.7) {
+    let chance = 0.3;
+    if (gameData.prestigeUpgrades && gameData.prestigeUpgrades.golden_compass) {
+        chance *= 1.5;
+    }
+    if(Math.random() < chance) {
         spawnGoldenBanana();
     }
 }, 10000)
