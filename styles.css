@@ -270,7 +270,7 @@ button:disabled {
 }
 .prestige-shop-item.disabled {
     opacity: 0.7;
-    border-color: #c5c2c2;
+    border-color: #bfb7b7;
     cursor: not-allowed;
 }
 @keyframes floatUp {

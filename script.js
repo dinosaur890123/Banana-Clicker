@@ -12,6 +12,13 @@ const gameData = {
         {id: 'farm', name: 'Banana Farm', baseCost: 1100, cost: 1100, rate: 12, count: 0, icon: '🌴'},
         {id: 'factory', name: 'Factory', baseCost: 12000, cost: 12000, rate: 45, count: 0, icon: '🏭'}
     ],
+    achievements: [
+        {id: 'click_100', name: 'Finger Warmup', desc: 'Click 100 times', achieved: false, check: (data) => ata.totalClicks >= 100},
+        {id: 'click_1000', name: 'Carpal Tunnel', desc: 'Click 1,000 times', achieved: false,  check: (data) => data.totalClicks >= 1000},
+        {id: 'banana_10k', name: 'Potassium Rich', desc: 'Harvest 10,000 lifetime bananas',  achieved: false, check: (data) => data.lifetimeBananas >= 10000},
+        {id: 'monkey_10', name: 'Primate Party', desc: 'Own 10 monkeys',  achieved: false, check: (data) => data.buildings[1].count >= 10},
+        {id: 'prestige_1', name: 'New Beginnings', desc: 'Ascend for the first time', achieved: false, check: (data) => data.bananaPeels > 0}
+    ],
     upgrades: [
     {
         id: 'iron_mouse',
@@ -59,6 +66,17 @@ const gameData = {
         purchased: false, 
         trigger: (data) => data.totalClicks >= 500,
         icon: '👍'
+    },
+    {
+        id: 'lucky_clover',
+        name: 'Lucky Clover',
+        cost: 5000,
+        desc: '5% chance for 5x Critical Clicks',
+        type: 'click',
+        multiplier: 1,
+        purchased: false, 
+        trigger: (data) => data.totalClicks >= 1000,
+        icon: '🍀'
     }
     ]
 };
@@ -226,10 +244,23 @@ function updateUI() {
     });
 }
 function clickBanana(event) {
-    const power = getClickPower();
+    let power = getClickPower();
+    let isCrit = false;
+    const luckyUpgrade = gameData.upgrades.find(u => u.id === 'lucky_clover');
+    if (luckyUpgrade && luckyUpgrade.purchased)  {
+        if (Math.random() < 0.05) {
+            power *= 5;
+            isCrit = true;
+        }
+    }
     gameData.bananas += power;
     gameData.totalClicks++;
-    spawnFloatingText(event.clientX, event.clientY, `+${power}`);
+    if (isCrit) {
+        spawnFloatingText(event.clientX, event.clientY, `CRIT! +${formatNumber(power)}`, 'crit-text');
+    } else {
+        spawnFloatingText(event.clientX, event.clientY, `+${formatNumber(power)}`);
+    }
+    checkAchievements();
     updateUI();
 }
 function buyBuilding(index) {
@@ -317,7 +348,13 @@ function loadGame() {
         gameData.lastSaveTime = savedData.lastSaveTime || Date.now();
         gameData.lifetimeBananas = savedData.lifetimeBananas || 0;
         gameData.bananaPeels = savedData.bananaPeels || 0;
-        gameData.prestigeUpgrades = savedData.prestigeUpgrades || {}; 
+        gameData.prestigeUpgrades = savedData.prestigeUpgrades || {};
+        if (savedData.achievements) {
+            savedData.achievements.forEach(savedAch => {
+                const existing = gameData.achievements.find(a => a.id === savedAch.id);
+                if (existing) existing.achieved = savedAch.achieved;
+            });
+        }
         if (savedData.buildings) {
             savedData.buildings.forEach((savedB, i) => {
                 if (gameData.buildings[i]) {
@@ -360,6 +397,34 @@ function spawnFloatingText(x, y, text) {
     el.style.top = `${y}px`;
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 1000);
+}
+function checkAchievements() {
+    let changed = false;
+    gameData.achievements.forEach(ach => {
+        if (!ach.achieved && ach.check(gameData)) {
+            ach.achieved = true;
+            showAchievementNotify(ach);
+            changed = true;
+        }
+    });
+    if (changed) saveGame();
+}
+function openAchievements() {
+    const list = document.getElementById('achievements-list');
+    list.innerHTML = '';
+    gameData.achievements.forEach(ach => {
+        const item = document.createElement('div');
+        item.className = `achievement-item ${ach.achieved ? 'unlocked' : 'locked'}`;
+        item.innerHTML = `
+        <div class="icon">${ach.achieved ? '🏆' : '🔒'}</div>
+        <div class="info">
+            <h4>${ach.name}</h4>
+            <p>${ach.desc}</p>
+        </div>
+        `;
+        list.appendChild(item);
+    });
+    document.getElementById('achievements-modal').style.display = 'flex';
 }
 function closeModal() {
     if (modalId) {
